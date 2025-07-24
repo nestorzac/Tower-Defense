@@ -10,21 +10,22 @@ public class Enemy : MonoBehaviour
     [SerializeField]
     private UnityEvent _onInitialize;
     private bool _isRunning;
-    private Transform _targetTransform;
+    private Vector3 _targetPosition;
     private Health _targetHealth;
-    private Coroutine _attackCoroutine;
+  
     private void OnEnable()
     {
         _isRunning = false;
         _onInitialize?.Invoke();
-        GetTarget();
+        Invoke("GetTarget", 0.5f);
     }
     private void GetTarget()
     {
         GameObject target = GameObject.FindGameObjectWithTag(_enemyData.primaryTargetTag);
         if (target != null && !_isRunning)
         {
-            _targetTransform = target.transform;
+            Vector3 targetPosition = new Vector3(target.transform.position.x, transform.position.y, target.transform.position.z);
+            _targetPosition = targetPosition;
             _targetHealth = target.GetComponent<Health>();
             _isRunning = true;
             _animator.Play(_enemyData.runAnimationName);
@@ -34,12 +35,12 @@ public class Enemy : MonoBehaviour
     {
         if (_isRunning)
         {
-            transform.position = Vector3.MoveTowards(transform.position, _targetTransform.position, _enemyData.runSpeed * Time.deltaTime);
-            transform.LookAt(_targetTransform.position);
-            if (Vector3.Distance(transform.position, _targetTransform.position) <= _enemyData.attackRange)
+            transform.position = Vector3.MoveTowards(transform.position, _targetPosition, _enemyData.runSpeed * Time.deltaTime);
+            transform.LookAt(_targetPosition);
+            if (Vector3.Distance(transform.position, _targetPosition) <= _enemyData.attackRange)
             {
                 _isRunning = false;
-                _attackCoroutine = StartCoroutine(Attack());
+                StartCoroutine(Attack());
             }
         }
     }
@@ -48,7 +49,8 @@ public class Enemy : MonoBehaviour
         while (_targetHealth != null && _targetHealth.CurrentHealth > 0)
         {
             _animator.Play(_enemyData.attckAnimationName, 0, 0f);
-            yield return new WaitForSeconds(_enemyData.attackDamage);
+            SoundManager.instance.Play(_enemyData.attackSoundName);
+            yield return new WaitForSeconds(_enemyData.attackDuration);
             if (_targetHealth != null)
             {
                 _targetHealth.TakeDamage(_enemyData.attackDamage);
@@ -56,21 +58,30 @@ public class Enemy : MonoBehaviour
             yield return new WaitForSeconds(_enemyData.attackCooldown);
 
         }
-        _targetHealth = null;
-        _targetTransform = null;
-        GetTarget();
+        Win();
+       
     }
-    private void Oisable()
+    private void Win()
     {
-        if (_attackCoroutine != null)
-        {
-            StopCoroutine(_attackCoroutine);
-            _attackCoroutine = null;
-
-        }
+        _animator.Play(_enemyData.winAnimationName);
+    }
+    public void Die()
+    {
+        StopAllCoroutines();
         _isRunning = false;
-        _targetTransform = null;
+        StartCoroutine(DieCoroutine());
+    }
+    private IEnumerator DieCoroutine()
+    {
+        _animator.Play(_enemyData.dieAnimationName);
+        yield return new WaitForSeconds(2f);
+        gameObject.SetActive(false);
+    }
+    private void OnDisable()
+    {
+         StopAllCoroutines();
+        _isRunning = false;
         _targetHealth = null;
-        
+
     }
 }

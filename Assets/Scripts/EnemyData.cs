@@ -10,11 +10,13 @@ public class EnemyData : ScriptableObject
     public float runSpeed = 2f;
     public float attackDuration = 1f;
     public float attackCooldown = 1f;
-    public string primaryTargetTag = "Torre.FBX";
+    public string attackSoundName = "AttackCaballero";
+    public string primaryTargetTag = "Tower";
     public string runAnimationName = "CaballeroRun";
     public string attckAnimationName = "CaballeroAttack";
-    
-     public string dieAnimationName = "CaballeroDie";
+
+    public string dieAnimationName = "CaballeroDie";
+    public string winAnimationName = "CaballeroWin";
     
     
     
